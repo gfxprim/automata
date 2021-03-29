@@ -5,7 +5,7 @@ This is an automata explorer using the
 
 ![Screenshot](automata.png)
 
-![Rule 94r](94r.jpg)
+![Rule 94r](94r.png)
 
 Presently it implements a nearest neighbor one dimensional cellular
 automata and the reversible variants of each rule. The implementation
