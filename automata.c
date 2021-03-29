@@ -413,7 +413,7 @@ int main(int argc, char *argv[])
 	gp_widget_event_unmask(pixmap, GP_WIDGET_EVENT_RESIZE);
 
 	ca1d_allocate();
-	gp_widgets_main_loop(layout, "Pixmap example", NULL, argc, argv);
+	gp_widgets_main_loop(layout, "Automata", NULL, argc, argv);
 
 	return 0;
 }
