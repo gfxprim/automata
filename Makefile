@@ -10,7 +10,7 @@ all: $(DEP) $(BIN)
 -include $(DEP)
 
 install:
-	install -m 644 -D $(BIN).json $(DESTDIR)/etc/gp_apps/$(BIN)/layout.json
+	install -m 644 -D layout.json $(DESTDIR)/etc/gp_apps/$(BIN)/layout.json
 	install -D $(BIN) -t $(DESTDIR)/usr/bin/
 
 clean:
