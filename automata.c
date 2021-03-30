@@ -385,18 +385,8 @@ int save_on_event(gp_widget_event *ev)
 
 	pixmap_w = gp_widget_by_uid(uids, "pixmap", GP_WIDGET_PIXMAP);
 	pixmap = pixmap_w->pixmap->pixmap;
-	if (gp_save_image(pixmap, path, NULL)) {
-		switch(errno) {
-		case EINVAL:
-			perror("File extension not found or pixel type not supported by format");
-			break;
-		case ENOSYS:
-			perror("Image format not supported");
-			break;
-		default:
-			perror("Save image failed");
-		}
-	}
+	if (gp_save_image(pixmap, path, NULL))
+		gp_dialog_msg_printf_run(GP_DIALOG_MSG_ERR, "Failed: %s", strerror(errno));
 
 	return 0;
 }
