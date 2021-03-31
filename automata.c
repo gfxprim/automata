@@ -347,25 +347,25 @@ int init_widget_on_event(gp_widget_event *ev)
 int select_dir_on_event(gp_widget_event *ev)
 {
 	const char *path;
-	gp_widget_dialog *dialog;
+	gp_dialog *dialog;
 	gp_widget *path_tbox;
 
 	if (ev->type != GP_WIDGET_EVENT_WIDGET)
 		return 0;
 
-	dialog = gp_widget_dialog_file_open_new(NULL);
+	dialog = gp_dialog_file_open_new(NULL);
 
-	if (gp_widget_dialog_run(dialog) != GP_WIDGET_DIALOG_PATH)
+	if (gp_dialog_run(dialog) != GP_WIDGET_DIALOG_PATH)
 		goto out;
 
-	path = gp_widget_dialog_file_open_path(dialog);
+	path = gp_dialog_file_open_path(dialog);
 	printf("Selected path '%s'\n", path);
 
 	path_tbox = gp_widget_by_uid(uids, "file path", GP_WIDGET_TBOX);
 	gp_widget_tbox_printf(path_tbox, "%s1dca.jpeg", path);
 
 out:
-	gp_widget_dialog_free(dialog);
+	gp_dialog_free(dialog);
 
 	return 0;
 }
@@ -386,7 +386,7 @@ int save_on_event(gp_widget_event *ev)
 	pixmap_w = gp_widget_by_uid(uids, "pixmap", GP_WIDGET_PIXMAP);
 	pixmap = pixmap_w->pixmap->pixmap;
 	if (gp_save_image(pixmap, path, NULL))
-		gp_dialog_msg_printf_run(GP_DIALOG_MSG_ERR, "Failed: %s", strerror(errno));
+		gp_dialog_msg_printf_run(GP_DIALOG_MSG_ERR, "Save Failed", "%s", strerror(errno));
 
 	return 0;
 }
