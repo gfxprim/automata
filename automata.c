@@ -25,7 +25,7 @@ static uint8_t rule = 110;
 /* Whether to use the reversible version of the current rule */
 static int reversible;
 
-static void *uids;
+static gp_htable *uids;
 
 static void ca1d_allocate(void)
 {
