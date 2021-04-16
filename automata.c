@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include <errno.h>
+#include <unistd.h>
 #include <gfxprim.h>
 
 /* If bit n is 1 then make all bits 1 otherwise 0 */
@@ -250,18 +251,23 @@ int rule_widget_on_event(gp_widget_event *ev)
 	return 0;
 }
 
-static void init_from_text(void)
+static void init_from_str(const char *text, size_t len)
 {
-	gp_widget *self = gp_widget_by_uid(uids, "init", GP_WIDGET_TBOX);
-	const char *text = gp_widget_tbox_text(self);
-	size_t len = gp_vec_strlen(text);
-
 	memset(init, 0, width * sizeof(uint64_t));
 
 	if (!len)
 		init[width / 2] = 1UL << (63 - (width * 32) % 64);
 	else
 		memcpy(init, text, GP_MIN(width * sizeof(uint64_t), len));
+}
+
+static void init_from_text(void)
+{
+	gp_widget *self = gp_widget_by_uid(uids, "init", GP_WIDGET_TBOX);
+	const char *text = gp_widget_tbox_text(self);
+	size_t len = gp_vec_strlen(text);
+
+	init_from_str(text, len);
 }
 
 int width_widget_on_event(gp_widget_event *ev)
@@ -391,7 +397,7 @@ int save_on_event(gp_widget_event *ev)
 	return 0;
 }
 
-int main(int argc, char *argv[])
+int widgets_main(int argc, char *argv[])
 {
 	gp_widget *layout = gp_app_layout_load("automata", &uids);
 
@@ -401,9 +407,66 @@ int main(int argc, char *argv[])
 	gp_widget *pixmap = gp_widget_by_uid(uids, "pixmap", GP_WIDGET_PIXMAP);
 
 	gp_widget_event_unmask(pixmap, GP_WIDGET_EVENT_RESIZE);
+	gp_widgets_main_loop(layout, "Automata", NULL, argc, argv);
+}
+
+int main(int argc, char *argv[])
+{
+	int c;
+	const char *init_arg = NULL;
+	const char *save_path = NULL;
+
+	while ((c = getopt(argc, argv, "+w:h:i:f:r:e")) != -1) {
+		switch(c) {
+		case 'w':
+			width = strtoul(optarg, NULL, 10);
+			break;
+		case 'h':
+			height = strtoul(optarg, NULL, 10);
+			break;
+		case 'i':
+			init_arg = optarg;
+			break;
+		case 'f':
+			save_path = optarg;
+			break;
+		case 'r':
+			rule = strtoul(optarg, NULL, 10);
+			break;
+		case 'e':
+			reversible = 1;
+			break;
+		default:
+			fprintf(stderr,
+				"Usage:\n\t%s [-w <width>][-h <height>][-i <initial conditions>][-f <save file>][-r <rule>][-e]\n",
+				argv[0]);
+			return 1;
+		}
+	}
 
 	ca1d_allocate();
-	gp_widgets_main_loop(layout, "Automata", NULL, argc, argv);
+
+	if (init_arg)
+		init_from_str(init_arg, strlen(init_arg));
+
+	if (!save_path)
+		return widgets_main(argc, argv);
+
+	gp_pixmap *pxm = gp_pixmap_alloc(width * 64, height, GP_PIXEL_G1);
+	gp_pixel bg = gp_rgb_to_pixmap_pixel(0xff, 0xff, 0xff, pxm);
+	gp_pixel fg = gp_rgb_to_pixmap_pixel(0x00, 0x00, 0x00, pxm);
+
+	ca1d_run();
+
+	for (uint32_t y = 0; y < height; y++) {
+		for (uint32_t x = 0; x < width * 64; x++)
+			shade_pixel(pxm, 1, 1, x, y, bg, fg);
+	}
+
+	if (gp_save_image(pxm, save_path, NULL)) {
+		perror("Save Failed!");
+		return 1;
+	}
 
 	return 0;
 }
