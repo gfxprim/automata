@@ -15,19 +15,18 @@
     },
     {
       "type": "frame",
-      "label": "Settings",
+      "title": "Settings",
       "halign": "fill",
       "widget": {
         "rows": 2,
         "halign": "fill",
-        "frame": "none",
         "widgets": [
           {
             "halign": "fill",
-            "cfill": "8 * 0",
-            "cpadf": "0, 0, 1, 1, 0, 1, 0, 0, 0",
+            "cfill": "7 * 0",
+            "cpadf": "0, 0, 1, 1, 0, 1, 0, 0",
             "border": "none",
-            "cols": 8,
+            "cols": 7,
             "widgets": [
               {
                 "type": "label",
