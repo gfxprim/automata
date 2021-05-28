@@ -21,8 +21,10 @@ static uint64_t *steps;
 static uint64_t *init;
 /* Zero row mask */
 static uint64_t *zeroes;
-/* Numeric representation of the current update rule */
-static uint8_t rule = 110;
+/* The number of rules to alternate between */
+static uint8_t rule_n = 1;
+/* Numeric representation of the current update rules */
+static uint8_t rules[256] = { 110 };
 /* Whether to use the reversible version of the current rule */
 static int reversible;
 
@@ -45,21 +47,23 @@ static void ca1d_allocate(void)
 }
 
 /* Apply the current rule to a 64bit segment of a row */
-static inline uint64_t ca1d_rule_apply(uint64_t c_prev,
-				       uint64_t c,
-				       uint64_t c_next,
-				       uint64_t c_prev_step)
+__attribute__((const))
+static inline uint64_t ca1d_rule_apply(const uint8_t rule,
+				       const uint64_t c_prev,
+				       const uint64_t c,
+				       const uint64_t c_next,
+				       const uint64_t c_prev_step)
 {
 	int i;
-	uint64_t l = (c >> 1) ^ (c_prev << 63);
-	uint64_t r = (c << 1) ^ (c_next >> 63);
+	const uint64_t l = (c >> 1) ^ (c_prev << 63);
+	const uint64_t r = (c << 1) ^ (c_next >> 63);
 	uint64_t c_next_step = 0;
 
 	for (i = 0; i < 8; i++) {
-		uint64_t active = BIT_TO_MAX(rule, i);
-		uint64_t left   = BIT_TO_MAX(i, 2);
-		uint64_t center = BIT_TO_MAX(i, 1);
-		uint64_t right  = BIT_TO_MAX(i, 0);
+		const uint64_t active = BIT_TO_MAX(rule, i);
+		const uint64_t left   = BIT_TO_MAX(i, 2);
+		const uint64_t center = BIT_TO_MAX(i, 1);
+		const uint64_t right  = BIT_TO_MAX(i, 0);
 
 		c_next_step |=
 			active & ~(left ^ l) & ~(center ^ c) & ~(right ^ r);
@@ -75,18 +79,28 @@ static inline void ca1d_rule_apply_row(const uint64_t *prev,
 {
 	size_t i;
 
-	next[0] = ca1d_rule_apply(cur[width - 1], cur[0],
-				  cur[GP_MIN(1, width - 1)], prev[0]);
+	next[0] = ca1d_rule_apply(rules[0],
+				  cur[width - 1],
+				  cur[0],
+				  cur[GP_MIN(1, width - 1)],
+				  prev[0]);
 
 	for (i = 1; i < width - 1; i++) {
-		next[i] = ca1d_rule_apply(cur[i - 1], cur[i], cur[i + 1],
+		next[i] = ca1d_rule_apply(rules[i % rule_n],
+					  cur[i - 1],
+					  cur[i],
+					  cur[i + 1],
 					  prev[i]);
 	}
 
 	if (i >= width)
 		return;
 
-	next[i] = ca1d_rule_apply(cur[i - 1], cur[i], cur[0], prev[i]);
+	next[i] = ca1d_rule_apply(rules[i % rule_n],
+				  cur[i - 1],
+				  cur[i],
+				  cur[0],
+				  prev[i]);
 }
 
 static void ca1d_run(void)
@@ -203,12 +217,44 @@ static void pixmap_do_redraw(void)
 	gp_widget_redraw(pixmap);
 }
 
+static void parse_rule_nums(const char *const rules_str)
+{
+	const char *c = rules_str;
+	uint8_t rule_acc = 0;
+	uint8_t rule_indx = 0;
+
+	while (*c) {
+		switch (*c) {
+		case '0' ... '9':
+			if (rule_acc > 25)
+				goto out;
+
+			rule_acc *= 10;
+			rule_acc += ((*c) - '0');
+			break;
+		case ',':
+		case ';':
+			rules[rule_indx] = rule_acc;
+			rule_indx++;
+			rule_acc = 0;
+			break;
+		case ' ':
+			break;
+		default:
+			return;
+		}
+
+		c++;
+	}
+
+out:
+	rules[rule_indx] = rule_acc;
+	rule_n = rule_indx + 1;
+}
+
 int rule_widget_on_event(gp_widget_event *ev)
 {
 	struct gp_widget_tbox *tb = ev->self->tbox;
-	char tbuf[4] = { 0 };
-	char c;
-	int r;
 
 	if (ev->type != GP_WIDGET_EVENT_WIDGET)
 		return 0;
@@ -217,23 +263,16 @@ int rule_widget_on_event(gp_widget_event *ev)
 	case GP_WIDGET_TBOX:
 		switch(ev->sub_type) {
 		case GP_WIDGET_TBOX_FILTER:
-			c = (char)ev->val;
-
-			if (c < '0' || c > '9')
-				return 1;
-
-			if (!gp_vec_strlen(tb->buf))
+			switch ((char)ev->val) {
+			case '0' ... '9':
+			case ',':
+			case ';':
 				return 0;
+			}
 
-			strcpy(tbuf, tb->buf);
-			tbuf[tb->cur_pos] = c;
-
-			r = strtol(tbuf, NULL, 10);
-
-			return r > 255;
-			break;
+			return 1;
 		case GP_WIDGET_TBOX_EDIT:
-			rule = strtol(tb->buf, NULL, 10);
+			parse_rule_nums(tb->buf);
 			break;
 		default:
 			break;

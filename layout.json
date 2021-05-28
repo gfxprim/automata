@@ -30,14 +30,13 @@
             "widgets": [
               {
                 "type": "label",
-                "text": "Rule No.",
+                "text": "Rules No.",
                 "halign": "left"
               },
               {
                 "type": "tbox",
                 "on_event": "rule_widget_on_event",
-                "len": 3,
-                "max_len": 3,
+                "len": 10,
                 "text": "110"
                },
                {
