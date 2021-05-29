@@ -23,10 +23,10 @@
         "widgets": [
           {
             "halign": "fill",
+            "cols": 7,
             "cfill": "7 * 0",
             "cpadf": "0, 0, 1, 1, 0, 1, 0, 0",
             "border": "none",
-            "cols": 7,
             "widgets": [
               {
                 "type": "label",
