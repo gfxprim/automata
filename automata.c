@@ -27,6 +27,8 @@ static uint8_t rule_n = 1;
 static uint8_t rules[256] = { 110 };
 /* Whether to use the reversible version of the current rule */
 static int reversible;
+/* Meta update rule which changes the rule being used */
+static uint8_t meta_rule = 0;
 
 static gp_htable *uids;
 
@@ -44,6 +46,31 @@ static void ca1d_allocate(void)
 	if (steps)
 		gp_vec_free(steps);
 	steps = gp_matrix_new(width, height, sizeof(uint64_t));
+}
+
+/* Count the number of set bits using classic "Magic Numbers" algorithm.
+ *
+ * Binary Magic Numbers, by Edwin E. Freed; Dr. Dobbs Journal, April 1983
+ * https://archive.org/details/1983-04-dr-dobbs-journal/page/24/mode/1up
+ */
+__attribute__((const))
+static inline uint8_t pop_count(const uint64_t bit_field)
+{
+	const uint64_t B[6] = {
+		0x5555555555555555,
+		0x3333333333333333,
+		0x0f0f0f0f0f0f0f0f,
+		0x00ff00ff00ff00ff,
+		0x0000ffff0000ffff,
+		0x00000000ffffffff
+	};
+	int i;
+	uint64_t ret = bit_field;
+
+	for (i = 0; i < 6; i++)
+		ret = ((ret >> (1 << i)) & B[i]) + (ret & B[i]);
+
+	return ret;
 }
 
 /* Apply the current rule to a 64bit segment of a row */
@@ -103,6 +130,63 @@ static inline void ca1d_rule_apply_row(const uint64_t *prev,
 				  prev[i]);
 }
 
+static inline uint8_t ca1d_meta_rule_apply(const uint8_t rule,
+					   const uint64_t c_prev,
+					   const uint64_t c,
+					   const uint64_t c_next)
+{
+	int i;
+	const int pl = pop_count(c_prev) > 32 ? 1 : 0;
+	const int pc = pop_count(c) > 32 ? 1 : 0;
+	const int pr = pop_count(c_next) > 32 ? 1 : 0;
+	int c_next_step = 0;
+
+	for (i = 0; i < 8; i++) {
+		const int active = (rule >> i) & 1;
+		const int left   = (i >> 2) & 1;
+		const int center = (i >> 1) & 1;
+		const int right  = i & 1;
+
+		c_next_step |=
+			active & ~(left ^ pl) & ~(center ^ pc) & ~(right ^ pr);
+	}
+
+	return rules[c_next_step];
+}
+
+static inline void ca1d_meta_rule_apply_row(const uint64_t *prev,
+					    const uint64_t *cur,
+					    uint64_t *next)
+{
+	size_t i;
+	uint64_t c_prev = cur[width - 1],
+		c = cur[0],
+		c_next = cur[GP_MIN(1, width - 1)];
+	uint8_t rule = ca1d_meta_rule_apply(meta_rule, c_prev, c, c_next);
+
+	next[0] = ca1d_rule_apply(rule, c_prev, c, c_next, prev[0]);
+
+	for (i = 1; i < width - 1; i++) {
+		c_prev = cur[i - 1];
+		c = cur[i];
+		c_next = cur[i + 1];
+
+		rule = ca1d_meta_rule_apply(meta_rule, c_prev, c, c_next);
+		next[i] = ca1d_rule_apply(rule, c_prev, c, c_next, prev[i]);
+	}
+
+	if (i >= width)
+		return;
+
+	c_prev = cur[i - 1];
+	c = cur[i];
+	c_next = cur[0];
+
+	rule = ca1d_meta_rule_apply(meta_rule, c_prev, c, c_next);
+	next[i] = ca1d_rule_apply(rule, c_prev, c, c_next, prev[i]);
+}
+
+
 static void ca1d_run(void)
 {
 	const uint64_t *prev = zeroes;
@@ -113,7 +197,10 @@ static void ca1d_run(void)
 	memcpy(steps, init, width * sizeof(uint64_t));
 
 	for (;;) {
-		ca1d_rule_apply_row(prev, cur, next);
+		if (meta_rule)
+			ca1d_meta_rule_apply_row(prev, cur, next);
+		else
+			ca1d_rule_apply_row(prev, cur, next);
 
 		if (++i >= height)
 			break;
@@ -456,7 +543,7 @@ int main(int argc, char *argv[])
 	const char *save_path = NULL;
 	float scale = 1;
 
-	while ((c = getopt(argc, argv, "+w:h:i:f:r:es:")) != -1) {
+	while ((c = getopt(argc, argv, "+w:h:i:m:f:r:es:")) != -1) {
 		switch(c) {
 		case 'w':
 			width = strtoul(optarg, NULL, 10);
@@ -466,6 +553,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'i':
 			init_arg = optarg;
+			break;
+		case 'm':
+			meta_rule = strtoul(optarg, NULL, 10);
 			break;
 		case 'f':
 			save_path = optarg;
@@ -481,7 +571,7 @@ int main(int argc, char *argv[])
 			break;
 		default:
 			fprintf(stderr,
-				"Usage:\n\t%s [-w <width>][-h <height>][-i <initial conditions>][-f <save file>][-r <rule>][-e][-s <scale>]\n",
+				"Usage:\n\t%s [-w <width>][-h <height>][-i <initial conditions>][-f <save file>][-r <rule>][-m <meta_rule>][-e][-s <scale>]\n",
 				argv[0]);
 			return 1;
 		}
