@@ -377,6 +377,39 @@ int rule_widget_on_event(gp_widget_event *ev)
 	return 0;
 }
 
+int meta_rule_widget_on_event(gp_widget_event *ev)
+{
+	struct gp_widget_tbox *tb = ev->self->tbox;
+
+	if (ev->type != GP_WIDGET_EVENT_WIDGET)
+		return 0;
+
+	switch(ev->self->type) {
+	case GP_WIDGET_TBOX:
+		switch(ev->sub_type) {
+		case GP_WIDGET_TBOX_FILTER:
+			switch ((char)ev->val) {
+			case '0' ... '9':
+				return 0;
+			}
+
+			return 1;
+		case GP_WIDGET_TBOX_EDIT:
+			meta_rule = (uint8_t)strtoul(tb->buf, NULL, 10);
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		return 0;
+	}
+
+	pixmap_do_redraw();
+
+	return 0;
+}
+
 static void init_from_str(const char *text, size_t len)
 {
 	memset(init, 0, width * sizeof(uint64_t));
@@ -581,6 +614,8 @@ int main(int argc, char *argv[])
 
 	if (init_arg)
 		init_from_str(init_arg, strlen(init_arg));
+
+	gp_set_debug_level(3);
 
 	if (!save_path)
 		return widgets_main(argc, argv);

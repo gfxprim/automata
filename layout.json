@@ -18,14 +18,14 @@
       "title": "Settings",
       "halign": "fill",
       "widget": {
-        "rows": 2,
+        "rows": 3,
         "halign": "fill",
         "widgets": [
           {
             "halign": "fill",
-            "cols": 7,
-            "cfill": "7 * 0",
-            "cpadf": "0, 0, 1, 1, 0, 1, 0, 0",
+            "cols": 5,
+            "cfill": "5 * 0",
+            "cpadf": "0, 0, 1, 1, 0, 0",
             "border": "none",
             "widgets": [
               {
@@ -44,6 +44,29 @@
                  "label": "Reversible",
                  "on_event": "rule_widget_on_event"
                },
+              {
+                "type": "label",
+                "text": "Meta Rule No.",
+              },
+              {
+                "type": "tbox",
+                "on_event": "meta_rule_widget_on_event",
+                "len": 3,
+                "text": "0"
+               },
+            ]
+          },
+          {
+            "halign": "fill",
+            "cols": 4,
+            "cfill": "0, 0, 1, 0",
+            "border": "none",
+            "widgets": [
+               {
+                 "type": "label",
+                   "text": "Width (x64)",
+		   "halign": "left"
+               },
                {
                  "type": "tbox",
                  "len": 2,
@@ -53,7 +76,8 @@
                },
                {
                  "type": "label",
-                 "text": "X 64 Width"
+                   "text": "Height",
+		   "halign": "left"
                },
                {
                  "type": "tbox",
@@ -62,12 +86,8 @@
                  "text": "64",
                  "on_event": "height_widget_on_event"
                },
-               {
-                 "type": "label",
-                 "text": "Height"
-               }
-            ]
-          },
+	    ]
+	  },
           {
             "halign": "fill",
             "cols": 2,
