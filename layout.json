@@ -46,14 +46,14 @@
                },
               {
                 "type": "label",
-                "text": "Meta Rule No.",
+                "text": "Meta Rule No."
               },
               {
                 "type": "tbox",
                 "on_event": "meta_rule_widget_on_event",
                 "len": 3,
                 "text": "0"
-               },
+               }
             ]
           },
           {
@@ -85,7 +85,7 @@
                  "max_len": 4,
                  "text": "64",
                  "on_event": "height_widget_on_event"
-               },
+               }
 	    ]
 	  },
           {
