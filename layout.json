@@ -110,31 +110,6 @@
         ]
      }
   },
-  {
-    "cols": 3,
-    "halign": "fill",
-    "cfill": "0, 1, 0",
-    "border": "none",
-    "widgets": [
-      {
-        "type": "button",
-        "btype": "open",
-        "label": "Select Dir",
-        "on_event": "select_dir_on_event"
-      },
-      {
-        "type": "tbox",
-        "halign": "fill",
-        "uid": "file path",
-        "len": 40
-      },
-      {
-        "type": "button",
-        "btype": "save",
-        "label": "Save",
-        "on_event": "save_on_event"
-      }
-    ]
-  }
+  {"type": "button", "btype": "save", "label": "Save Image", "on_event": "save_on_event"}
  ]
 }
