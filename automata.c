@@ -596,8 +596,6 @@ int main(int argc, char *argv[])
 	if (init_arg)
 		init_from_str(init_arg, strlen(init_arg));
 
-	gp_set_debug_level(3);
-
 	if (!save_path)
 		return widgets_main(argc, argv);
 
