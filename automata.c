@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.1-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2021 Richard Palethorpe (richiejp.com)
  */
@@ -550,12 +550,26 @@ int widgets_main(int argc, char *argv[])
 	gp_widgets_main_loop(layout, "Automata", NULL, argc, argv);
 }
 
+static gp_app_info app_info = {
+	.name = "automata",
+	.desc = "Cellular atomata explorer",
+	.version = "1.0",
+	.license = "GPL-2.0-or-later",
+	.url = "http://github.com/gfxprim/automata",
+	.authors = (gp_app_info_author []) {
+		{.name = "Richard Palethorpe", .email = "https://richiejp.com", .years = "2021"},
+		{}
+	}
+};
+
 int main(int argc, char *argv[])
 {
 	int c;
 	const char *init_arg = NULL;
 	const char *save_path = NULL;
 	float scale = 1;
+
+	gp_app_info_set(&app_info);
 
 	while ((c = getopt(argc, argv, "+w:h:i:m:f:r:es:")) != -1) {
 		switch(c) {
