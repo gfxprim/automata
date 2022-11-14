@@ -349,7 +349,7 @@ int rule_widget_on_event(gp_widget_event *ev)
 	switch(ev->self->type) {
 	case GP_WIDGET_TBOX:
 		switch(ev->sub_type) {
-		case GP_WIDGET_TBOX_FILTER:
+		case GP_WIDGET_TBOX_PRE_FILTER:
 			switch ((char)ev->val) {
 			case '0' ... '9':
 			case ',':
@@ -387,7 +387,7 @@ int meta_rule_widget_on_event(gp_widget_event *ev)
 	switch(ev->self->type) {
 	case GP_WIDGET_TBOX:
 		switch(ev->sub_type) {
-		case GP_WIDGET_TBOX_FILTER:
+		case GP_WIDGET_TBOX_PRE_FILTER:
 			switch ((char)ev->val) {
 			case '0' ... '9':
 				return 0;
@@ -438,7 +438,7 @@ int width_widget_on_event(gp_widget_event *ev)
 		return 0;
 
 	switch(ev->sub_type) {
-	case GP_WIDGET_TBOX_FILTER:
+	case GP_WIDGET_TBOX_PRE_FILTER:
 		c = (char)ev->val;
 
 		return c < '0' || c > '9';
@@ -469,7 +469,7 @@ int height_widget_on_event(gp_widget_event *ev)
 		return 0;
 
 	switch(ev->sub_type) {
-	case GP_WIDGET_TBOX_FILTER:
+	case GP_WIDGET_TBOX_PRE_FILTER:
 		c = (char)ev->val;
 
 		return c < '0' || c > '9';
