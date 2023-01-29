@@ -1,4 +1,5 @@
-CFLAGS=-W -Wall -Wextra -O2 $(shell gfxprim-config --cflags)
+CFLAGS?=-W -Wall -Wextra -O2
+CFLAGS+=$(shell gfxprim-config --cflags)
 LDLIBS=-lm -lgfxprim $(shell gfxprim-config --libs-loaders) $(shell gfxprim-config --libs-widgets)
 BIN=automata
 
