@@ -547,11 +547,11 @@ int widgets_main(int argc, char *argv[])
 	gp_widget *pixmap = gp_widget_by_uid(uids, "pixmap", GP_WIDGET_PIXMAP);
 
 	gp_widget_event_unmask(pixmap, GP_WIDGET_EVENT_RESIZE);
-	gp_widgets_main_loop(layout, "Automata", NULL, argc, argv);
+	gp_widgets_main_loop(layout, NULL, argc, argv);
 }
 
-static gp_app_info app_info = {
-	.name = "automata",
+gp_app_info app_info = {
+	.name = "Automata",
 	.desc = "Cellular atomata explorer",
 	.version = "1.0",
 	.license = "GPL-2.0-or-later",
@@ -568,8 +568,6 @@ int main(int argc, char *argv[])
 	const char *init_arg = NULL;
 	const char *save_path = NULL;
 	float scale = 1;
-
-	gp_app_info_set(&app_info);
 
 	while ((c = getopt(argc, argv, "+w:h:i:m:f:r:es:")) != -1) {
 		switch(c) {
