@@ -546,7 +546,7 @@ int widgets_main(int argc, char *argv[])
 
 	gp_widget *pixmap = gp_widget_by_uid(uids, "pixmap", GP_WIDGET_PIXMAP);
 
-	gp_widget_event_unmask(pixmap, GP_WIDGET_EVENT_RESIZE);
+	gp_widget_events_unmask(pixmap, GP_WIDGET_EVENT_RESIZE);
 	gp_widgets_main_loop(layout, NULL, argc, argv);
 }
 
