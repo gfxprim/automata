@@ -366,7 +366,7 @@ int rule_widget_on_event(gp_widget_event *ev)
 		}
 		break;
 	case GP_WIDGET_CHECKBOX:
-		reversible = ev->self->checkbox->val;
+		reversible = gp_widget_bool_get(ev->self);
 		break;
 	default:
 		return 0;
