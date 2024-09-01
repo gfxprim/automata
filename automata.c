@@ -109,7 +109,7 @@ static inline void ca1d_rule_apply_row(const uint64_t *prev,
 	next[0] = ca1d_rule_apply(rules[0],
 				  cur[width - 1],
 				  cur[0],
-				  cur[GP_MIN(1, width - 1)],
+				  cur[GP_MIN((size_t)1, width - 1)],
 				  prev[0]);
 
 	for (i = 1; i < width - 1; i++) {
@@ -161,7 +161,7 @@ static inline void ca1d_meta_rule_apply_row(const uint64_t *prev,
 	size_t i;
 	uint64_t c_prev = cur[width - 1],
 		c = cur[0],
-		c_next = cur[GP_MIN(1, width - 1)];
+		c_next = cur[GP_MIN((size_t)1, width - 1)];
 	uint8_t rule = ca1d_meta_rule_apply(meta_rule, c_prev, c, c_next);
 
 	next[0] = ca1d_rule_apply(rule, c_prev, c, c_next, prev[0]);
@@ -274,11 +274,9 @@ static void allocate_backing_pixmap(gp_widget_event *ev)
 	gp_size l = w->w & 63 ? w->w + 64 - (w->w & 63) : w->w;
 	gp_size h = w->h;
 
-	gp_pixmap_free(w->pixmap->pixmap);
-
-	w->pixmap->pixmap = gp_pixmap_alloc(l, h, ev->ctx->pixel_type);
-
-	fill_pixmap(w->pixmap->pixmap);
+	gp_pixmap *new_pixmap = gp_pixmap_alloc(l, h, ev->ctx->pixel_type);
+	gp_pixmap_free(gp_widget_pixmap_set(w, new_pixmap));
+	fill_pixmap(new_pixmap);
 }
 
 int pixmap_on_event(gp_widget_event *ev)
@@ -300,7 +298,7 @@ static void pixmap_do_redraw(void)
 {
 	gp_widget *pixmap = gp_widget_by_uid(uids, "pixmap", GP_WIDGET_PIXMAP);
 
-	fill_pixmap(pixmap->pixmap->pixmap);
+	fill_pixmap(gp_widget_pixmap_get(pixmap));
 	gp_widget_redraw(pixmap);
 }
 
@@ -341,8 +339,6 @@ out:
 
 int rule_widget_on_event(gp_widget_event *ev)
 {
-	struct gp_widget_tbox *tb = ev->self->tbox;
-
 	if (ev->type != GP_WIDGET_EVENT_WIDGET)
 		return 0;
 
@@ -359,7 +355,7 @@ int rule_widget_on_event(gp_widget_event *ev)
 
 			return 1;
 		case GP_WIDGET_TBOX_EDIT:
-			parse_rule_nums(tb->buf);
+			parse_rule_nums(gp_widget_tbox_text(ev->self));
 			break;
 		default:
 			break;
@@ -379,10 +375,10 @@ int rule_widget_on_event(gp_widget_event *ev)
 
 int meta_rule_widget_on_event(gp_widget_event *ev)
 {
-	struct gp_widget_tbox *tb = ev->self->tbox;
-
 	if (ev->type != GP_WIDGET_EVENT_WIDGET)
 		return 0;
+
+	const char *text = gp_widget_tbox_text(ev->self);
 
 	switch(ev->self->type) {
 	case GP_WIDGET_TBOX:
@@ -395,7 +391,7 @@ int meta_rule_widget_on_event(gp_widget_event *ev)
 
 			return 1;
 		case GP_WIDGET_TBOX_EDIT:
-			meta_rule = (uint8_t)strtoul(tb->buf, NULL, 10);
+			meta_rule = (uint8_t)strtoul(text, NULL, 10);
 			break;
 		default:
 			break;
@@ -431,11 +427,12 @@ static void init_from_text(void)
 
 int width_widget_on_event(gp_widget_event *ev)
 {
-	struct gp_widget_tbox *tb = ev->self->tbox;
 	char c;
 
 	if (ev->type != GP_WIDGET_EVENT_WIDGET)
 		return 0;
+
+	const char *text = gp_widget_tbox_text(ev->self);
 
 	switch(ev->sub_type) {
 	case GP_WIDGET_TBOX_PRE_FILTER:
@@ -445,10 +442,10 @@ int width_widget_on_event(gp_widget_event *ev)
 
 		break;
 	case GP_WIDGET_TBOX_EDIT:
-		if (!gp_vec_strlen(tb->buf))
+		if (!text[0])
 			return 0;
 
-		width = GP_MAX(1, strtol(tb->buf, NULL, 10));
+		width = GP_MAX(1, strtol(text, NULL, 10));
 		ca1d_allocate();
 		init_from_text();
 		pixmap_do_redraw();
@@ -462,11 +459,12 @@ int width_widget_on_event(gp_widget_event *ev)
 
 int height_widget_on_event(gp_widget_event *ev)
 {
-	struct gp_widget_tbox *tb = ev->self->tbox;
 	char c;
 
 	if (ev->type != GP_WIDGET_EVENT_WIDGET)
 		return 0;
+
+	const char *text = gp_widget_tbox_text(ev->self);
 
 	switch(ev->sub_type) {
 	case GP_WIDGET_TBOX_PRE_FILTER:
@@ -476,10 +474,10 @@ int height_widget_on_event(gp_widget_event *ev)
 
 		break;
 	case GP_WIDGET_TBOX_EDIT:
-		if (!gp_vec_strlen(tb->buf))
+		if (!text[0])
 			return 0;
 
-		height = GP_MAX(2, strtol(tb->buf, NULL, 10));
+		height = GP_MAX(2, strtol(text, NULL, 10));
 		ca1d_allocate();
 		init_from_text();
 		pixmap_do_redraw();
@@ -525,7 +523,7 @@ int save_on_event(gp_widget_event *ev)
 		return 0;
 
 	pixmap_w = gp_widget_by_uid(uids, "pixmap", GP_WIDGET_PIXMAP);
-	pixmap = pixmap_w->pixmap->pixmap;
+	pixmap = gp_widget_pixmap_get(pixmap_w);
 
 	path = gp_dialog_file_path(dialog);
 
